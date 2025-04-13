@@ -1,5 +1,5 @@
 from matplotlib import pyplot as plt
-
+import numpy as np
 
 def build_graphs(data, epochs, name, figsize=(15, 8)):
     # ? results loss
@@ -33,14 +33,17 @@ def build_graphs(data, epochs, name, figsize=(15, 8)):
 
     # ? results training vram
     plt.figure(figsize=figsize)
+    x = []
+    y = []
     for result in data:
         if "train_vram_usage" in result:
-            plt.plot(result["train_vram_usage"], label=result["name"])
+            x.append(result["name"])
+            y.append(np.max(result["train_vram_usage"]))
 
-    plt.xlabel("iteration")
-    plt.ylabel("vram (mb)")
-    plt.yscale('log')
-    plt.title(f"{name} Training VRAM Usage")
+    plt.bar(x, y)
+    plt.xlabel("optimizer")
+    plt.ylabel("max vram (mb)")
+    plt.title(f"{name} Training Max VRAM Usage")
     plt.grid(True, which="both")
     # Render the plot
     plt.show()
@@ -55,8 +58,8 @@ def build_graphs(data, epochs, name, figsize=(15, 8)):
             y.append(result["runtime"] / epochs)
 
     plt.bar(x, y)
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
+    plt.xlabel("optimizer")
+    plt.ylabel("runtime per epoch")
     plt.title(f"{name} Average Training Time Per Epoch")
     plt.grid(True, which="both")
     # Render the plot
