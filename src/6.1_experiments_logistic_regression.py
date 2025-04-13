@@ -1,22 +1,53 @@
-
 import time
 import tracemalloc
+import nvidia_smi
 
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from matplotlib import pyplot as plt
+
 
 from models import LinearRegression
 
-def train(model, loader, criterion, optimizer, device):
+
+def convert_to_mb(data):
+    return data / 1024 ** 2
+
+
+def get_mean_std(batch_size):
+    # VAR[x] = E[X**2] - E[X]**2
+    transforms_temp = transforms.Compose([transforms.ToTensor()])
+    train_data_temp = datasets.MNIST(
+        "../datasets", train=True, transform=transforms_temp
+    )
+    train_loader_temp = DataLoader(train_data_temp, batch_size=batch_size, shuffle=True)
+
+    channels_sum, channels_squared_sum, num_batches = 0, 0, 0
+
+    for img, _ in train_loader_temp:
+        channels_sum += torch.mean(img)
+        channels_squared_sum += torch.mean(img ** 2)
+        num_batches += 1
+
+    mean = channels_sum / num_batches
+    std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
+    return mean, std
+
+
+def train_model(model, loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
 
     ram_usage_list = []
+
+    if device == "cuda":
+        nvidia_smi.nvmlInit()
+
+    else:
+        tracemalloc.start()
 
     for img, labels in loader:
         img = img.view(img.size(0), -1).to(device)
@@ -28,14 +59,28 @@ def train(model, loader, criterion, optimizer, device):
         loss.backward()
         optimizer.step()
 
+        if device == "cuda":
+            handle = nvidia_smi.nvmlDeviceGetHandleByIndex(0)
+            gpu_info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
+            ram_usage_list.append(gpu_info.used / 1024 ** 2)
+        else:
+            current, _ = tracemalloc.get_traced_memory()
+            ram_usage_list.append(current)
+
         running_loss += loss.item() * labels.size(0)
         _, preds = outputs.max(1)
         total += labels.size(0)
         correct += preds.eq(labels).sum().item()
-    return running_loss / total, 100.0 * correct / total
+
+    if device == "cuda":
+        nvidia_smi.nvmlShutdown()
+    else:
+        tracemalloc.stop()
+
+    return running_loss / total, 100.0 * correct / total, ram_usage_list
 
 
-def test(model, loader, criterion, device):
+def test_model(model, loader, criterion, device):
     model.eval()
     loss_sum = 0
     correct = 0
@@ -54,26 +99,6 @@ def test(model, loader, criterion, device):
         correct += preds.eq(labels).sum().item()
 
     return loss_sum / total, 100.0 * correct / total
-
-
-def get_mean_std(batch_size):
-    # VAR[x] = E[X**2] - E[X]**2
-    transforms_temp = transforms.Compose([transforms.ToTensor()])
-    train_data_temp = datasets.MNIST(
-        "../datasets", train=True, transform=transforms_temp
-    )
-    train_loader_temp = DataLoader(train_data_temp, batch_size=batch_size, shuffle=True)
-
-    channels_sum, channels_squared_sum, num_batches = 0, 0, 0
-
-    for img, _ in train_loader_temp:
-        channels_sum += torch.mean(img)
-        channels_squared_sum += torch.mean(img**2)
-        num_batches += 1
-
-    mean = channels_sum / num_batches
-    std = (channels_squared_sum / num_batches - mean**2) ** 0.5
-    return mean, std
 
 
 def main():
@@ -132,22 +157,19 @@ def main():
             print(f"Warning: Optimizer {optimizer_name} not a condition. Skipping")
             continue
 
-        train_loss_list = []
-        train_acc_list = []
+        train_ram_usage_list = []
         test_loss_list = []
         test_acc_list = []
 
         start_time = time.time()
         for epoch in range(1, epochs + 1):
-            train_loss, train_acc = train(
-                model, train_loader, criterion, optimizer, device
-            )
-            test_loss, test_acc = test(model, test_loader, criterion, device)
+            train_loss, train_acc, train_ram_usage = train_model(
+                model, train_loader, criterion, optimizer, device)
 
-            train_loss_list.append(train_loss)
-            train_acc_list.append(train_acc)
+            test_loss, test_acc = test_model(model, test_loader, criterion, device)
             test_loss_list.append(test_loss)
             test_acc_list.append(test_acc)
+            train_ram_usage_list.extend(train_ram_usage)
 
             print(
                 f"Epoch {epoch}/{epochs} | "
@@ -155,66 +177,25 @@ def main():
                 f"Test Loss: {test_loss:.4f} | Test Acc: {test_acc:.2f}%"
             )
         end_time = time.time()
+
+        result_dic = {
+            "name": optimizer_name,
+            "test_loss": test_loss_list,
+            "test_acc": test_acc_list,
+            "runtime": end_time - start_time,
+            "train_vram_usage": train_ram_usage_list
+        }
+
         result_list.append(
-            [optimizer_name, test_loss_list, test_acc_list, end_time - start_time]
+            #$[optimizer_name, test_loss_list, test_acc_list, ]
+        result_dic
         )
 
     print("training complete")
 
-    #? results loss
-    plt.figure(figsize=(15, 8))
-    for result in result_list:
-        plt.plot(range(1, epochs + 1), result[1], label=result[0])
 
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.yscale('log')
-    plt.title("MNIST Linear Regression Training Loss by Optimizer")
-    plt.grid(True, which="both", ls="--")
-    plt.legend()
-    # Render the plot
-    plt.show()
 
-    #? results accuracy
-    plt.figure(figsize=(15, 8))
-    for result in result_list:
-        plt.plot(range(1, epochs + 1), result[2], label=result[0])
-
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.title("MNIST Linear Regression Training Accuracy by Optimizer")
-    plt.grid(True, which="both", ls="--")
-    plt.legend()
-    # Render the plot
-    plt.show()
-
-    #? results per epoch
-    plt.figure(figsize=(15, 8))
-    x = []
-    y = []
-    for result in result_list:
-        x.append(result[0])
-        y.append(result[3] / epochs)
-
-    plt.bar(x, y)
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.title("Average Training Time Per Epoch")
-    plt.grid(True, which="both")
-    # Render the plot
-    plt.show()
 
 if __name__ == "__main__":
-    #main()
-    print("hello")
+    main()
 
-    import tracemalloc
-    import nvidia_smi
-
-    tracemalloc.start()
-    for i in range(5):
-        print(i)
-        _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-
-    peak / 10 ** 6
