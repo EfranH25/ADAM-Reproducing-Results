@@ -149,7 +149,7 @@ def main(mini_batch_size, learning_rate, weight_decay, epochs):
         result_list.append(result_dic)
 
     print("training complete")
-    build_graphs(result_list, epochs, name="MNIST Linear Regression")
+    build_graphs(result_list, epochs, name="CIFAR10 Conv Net")
 
 
 if __name__ == "__main__":

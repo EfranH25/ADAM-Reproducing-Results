@@ -11,6 +11,26 @@ from models import MultiNet
 from utilities import build_graphs
 
 
+def get_mean_std(batch_size):
+    # VAR[x] = E[X**2] - E[X]**2
+    transforms_temp = transforms.Compose([transforms.ToTensor()])
+    train_data_temp = datasets.MNIST(
+        "../datasets", train=True, transform=transforms_temp
+    )
+    train_loader_temp = DataLoader(train_data_temp, batch_size=batch_size, shuffle=True)
+
+    channels_sum, channels_squared_sum, num_batches = 0, 0, 0
+
+    for img, _ in train_loader_temp:
+        channels_sum += torch.mean(img)
+        channels_squared_sum += torch.mean(img ** 2)
+        num_batches += 1
+
+    mean = channels_sum / num_batches
+    std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
+    return mean, std
+
+
 def train_model(model, loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
@@ -153,7 +173,7 @@ def main(mini_batch_size, learning_rate, weight_decay, epochs):
         result_list.append(result_dic)
 
     print("training complete")
-    build_graphs(result_list, epochs, name="MNIST Linear Regression")
+    build_graphs(result_list, epochs, name="MNIST Multi Layer Neural Net")
 
 
 if __name__ == "__main__":
