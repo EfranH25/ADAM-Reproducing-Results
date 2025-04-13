@@ -1,6 +1,4 @@
 import time
-import tracemalloc
-import nvidia_smi
 
 import torch
 from torch import nn, optim
@@ -9,28 +7,9 @@ from torchvision import datasets, transforms
 
 from models import LinearRegression
 from utilities import build_graphs
+from utilities import get_mean_std_mnist as get_mean_std
 from utilities import train_model_mnist as train_model
 from utilities import test_model_mnist as test_model
-
-
-def get_mean_std(batch_size):
-    # VAR[x] = E[X**2] - E[X]**2
-    transforms_temp = transforms.Compose([transforms.ToTensor()])
-    train_data_temp = datasets.MNIST(
-        "../datasets", train=True, transform=transforms_temp
-    )
-    train_loader_temp = DataLoader(train_data_temp, batch_size=batch_size, shuffle=True)
-
-    channels_sum, channels_squared_sum, num_batches = 0, 0, 0
-
-    for img, _ in train_loader_temp:
-        channels_sum += torch.mean(img)
-        channels_squared_sum += torch.mean(img ** 2)
-        num_batches += 1
-
-    mean = channels_sum / num_batches
-    std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
-    return mean, std
 
 
 def main(mini_batch_size, learning_rate, weight_decay, epochs):

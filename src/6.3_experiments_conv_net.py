@@ -1,6 +1,4 @@
 import time
-import tracemalloc
-import nvidia_smi
 
 import torch
 from torch import nn, optim

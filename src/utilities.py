@@ -3,6 +3,9 @@ import numpy as np
 import nvidia_smi
 import tracemalloc
 
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+
 
 def train_model_mnist(model, loader, criterion, optimizer, device):
     model.train()
@@ -134,6 +137,26 @@ def test_model_cfar(model, loader, criterion, device):
         correct += preds.eq(labels).sum().item()
 
     return loss_sum / total, 100.0 * correct / total
+
+
+def get_mean_std_mnist(batch_size):
+    # VAR[x] = E[X**2] - E[X]**2
+    transforms_temp = transforms.Compose([transforms.ToTensor()])
+    train_data_temp = datasets.MNIST(
+        "../datasets", train=True, transform=transforms_temp
+    )
+    train_loader_temp = DataLoader(train_data_temp, batch_size=batch_size, shuffle=True)
+
+    channels_sum, channels_squared_sum, num_batches = 0, 0, 0
+
+    for img, _ in train_loader_temp:
+        channels_sum += torch.mean(img)
+        channels_squared_sum += torch.mean(img ** 2)
+        num_batches += 1
+
+    mean = channels_sum / num_batches
+    std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
+    return mean, std
 
 
 def build_graphs(data, epochs, name, figsize=(15, 8)):
