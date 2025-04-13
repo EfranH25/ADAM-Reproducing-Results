@@ -7,27 +7,8 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from models import LinearRegression
+from models import MultiNet
 from utilities import build_graphs
-
-def get_mean_std(batch_size):
-    # VAR[x] = E[X**2] - E[X]**2
-    transforms_temp = transforms.Compose([transforms.ToTensor()])
-    train_data_temp = datasets.MNIST(
-        "../datasets", train=True, transform=transforms_temp
-    )
-    train_loader_temp = DataLoader(train_data_temp, batch_size=batch_size, shuffle=True)
-
-    channels_sum, channels_squared_sum, num_batches = 0, 0, 0
-
-    for img, _ in train_loader_temp:
-        channels_sum += torch.mean(img)
-        channels_squared_sum += torch.mean(img ** 2)
-        num_batches += 1
-
-    mean = channels_sum / num_batches
-    std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
-    return mean, std
 
 
 def train_model(model, loader, criterion, optimizer, device):
@@ -118,30 +99,25 @@ def main(mini_batch_size, learning_rate, weight_decay, epochs):
     test_loader = DataLoader(test_dataset, shuffle=True, batch_size=mini_batch_size)
 
     # ? training model
-    optimizer_options = ["Adam", "SGDNesterov", "AdaGrad"]
+    optimizer_options = ["Adam", "SGDNesterov", "AdaGrad", "RMSProp", "AdaDelta"]
     result_list = []
 
     for optimizer_name in optimizer_options:
         print("Optimizer: ", optimizer_name)
-        model = LinearRegression(28 * 28, 10).to(device)
+        model = MultiNet(28 * 28, 10).to(device)
         criterion = nn.CrossEntropyLoss()
 
         if optimizer_name == "Adam":
-            optimizer = optim.Adam(
-                model.parameters(), lr=learning_rate, weight_decay=weight_decay
-            )
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
         elif optimizer_name == "SGDNesterov":
-            optimizer = optim.SGD(
-                model.parameters(),
-                lr=learning_rate,
-                weight_decay=weight_decay,
-                momentum=0.9,
-                nesterov=True,
-            )
+            optimizer = optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay, momentum=0.9,
+                                  nesterov=True)
         elif optimizer_name == "AdaGrad":
-            optimizer = optim.Adagrad(
-                model.parameters(), lr=learning_rate, weight_decay=weight_decay
-            )
+            optimizer = optim.Adagrad(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        elif optimizer_name == "RMSProp":
+            optimizer = optim.RMSprop(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        elif optimizer_name == "AdaDelta":
+            optimizer = optim.Adadelta(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
         else:
             print(f"Warning: Optimizer {optimizer_name} not a condition. Skipping")
             continue
@@ -184,5 +160,5 @@ if __name__ == "__main__":
     mini_batch_size = 128
     learning_rate = 1e-4
     weight_decay = 1e-4
-    epochs = 2
+    epochs = 25
     main(mini_batch_size, learning_rate, weight_decay, epochs)
