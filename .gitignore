@@ -172,3 +172,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# PyCharm & Project Ignore
+.idea
+5090_wheel_files/*
+datasets/*
