@@ -7,8 +7,8 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-
 from models import LinearRegression
+from utilities import build_graphs
 
 
 def convert_to_mb(data):
@@ -101,13 +101,7 @@ def test_model(model, loader, criterion, device):
     return loss_sum / total, 100.0 * correct / total
 
 
-def main():
-    # ? setup
-    mini_batch_size = 128
-    learning_rate = 1e-4
-    weight_decay = 1e-4
-    epochs = 1
-
+def main(mini_batch_size, learning_rate, weight_decay, epochs):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("CUDA or CPU:", device)
 
@@ -182,20 +176,18 @@ def main():
             "name": optimizer_name,
             "test_loss": test_loss_list,
             "test_acc": test_acc_list,
-            "runtime": end_time - start_time,
-            "train_vram_usage": train_ram_usage_list
+            "train_vram_usage": train_ram_usage_list,
+            "runtime": end_time - start_time
         }
-
-        result_list.append(
-            #$[optimizer_name, test_loss_list, test_acc_list, ]
-        result_dic
-        )
+        result_list.append(result_dic)
 
     print("training complete")
-
-
+    build_graphs(result_list, epochs, name="MNIST Linear Regression")
 
 
 if __name__ == "__main__":
-    main()
-
+    mini_batch_size = 128
+    learning_rate = 1e-4
+    weight_decay = 1e-4
+    epochs = 2
+    main(mini_batch_size, learning_rate, weight_decay, epochs)
