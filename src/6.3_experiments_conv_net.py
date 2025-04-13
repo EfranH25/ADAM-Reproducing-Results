@@ -147,7 +147,6 @@ def main(mini_batch_size, learning_rate, weight_decay, epochs):
             "runtime": end_time - start_time
         }
         result_list.append(result_dic)
-        break
 
     print("training complete")
     build_graphs(result_list, epochs, name="CIFAR10 Conv Net")
@@ -157,5 +156,5 @@ if __name__ == "__main__":
     mini_batch_size = 128
     learning_rate = 1e-4
     weight_decay = 1e-4
-    epochs = 2
+    epochs = 25
     main(mini_batch_size, learning_rate, weight_decay, epochs)
