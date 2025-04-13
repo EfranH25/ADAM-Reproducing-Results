@@ -9,6 +9,9 @@ from torchvision import datasets, transforms
 
 from models import LinearRegression
 from utilities import build_graphs
+from utilities import train_model_mnist as train_model
+from utilities import test_model_mnist as test_model
+
 
 def get_mean_std(batch_size):
     # VAR[x] = E[X**2] - E[X]**2
@@ -28,72 +31,6 @@ def get_mean_std(batch_size):
     mean = channels_sum / num_batches
     std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
     return mean, std
-
-
-def train_model(model, loader, criterion, optimizer, device):
-    model.train()
-    running_loss = 0.0
-    correct = 0
-    total = 0
-
-    ram_usage_list = []
-
-    if device == "cuda":
-        nvidia_smi.nvmlInit()
-
-    else:
-        tracemalloc.start()
-
-    for img, labels in loader:
-        img = img.view(img.size(0), -1).to(device)
-        labels = labels.to(device)
-
-        optimizer.zero_grad()
-        outputs = model(img)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        if device == "cuda":
-            handle = nvidia_smi.nvmlDeviceGetHandleByIndex(0)
-            gpu_info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
-            ram_usage_list.append(gpu_info.used / 1024 ** 2)
-        else:
-            current, _ = tracemalloc.get_traced_memory()
-            ram_usage_list.append(current)
-
-        running_loss += loss.item() * labels.size(0)
-        _, preds = outputs.max(1)
-        total += labels.size(0)
-        correct += preds.eq(labels).sum().item()
-
-    if device == "cuda":
-        nvidia_smi.nvmlShutdown()
-    else:
-        tracemalloc.stop()
-
-    return running_loss / total, 100.0 * correct / total, ram_usage_list
-
-
-def test_model(model, loader, criterion, device):
-    model.eval()
-    loss_sum = 0
-    correct = 0
-    total = 0
-
-    for img, labels in loader:
-        img = img.view(img.size(0), -1).to(device)
-        labels = labels.to(device)
-
-        outputs = model(img)
-        loss = criterion(outputs, labels)
-
-        loss_sum += loss.item() * labels.size(0)
-        _, preds = outputs.max(1)
-        total += labels.size(0)
-        correct += preds.eq(labels).sum().item()
-
-    return loss_sum / total, 100.0 * correct / total
 
 
 def main(mini_batch_size, learning_rate, weight_decay, epochs):
