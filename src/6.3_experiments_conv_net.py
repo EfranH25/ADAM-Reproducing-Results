@@ -26,7 +26,7 @@ def train_model(model, loader, criterion, optimizer, device):
         tracemalloc.start()
 
     for img, labels in loader:
-        img = img.view().to(device)
+        img = img.to(device)
         labels = labels.to(device)
 
         optimizer.zero_grad()
@@ -63,7 +63,7 @@ def test_model(model, loader, criterion, device):
     total = 0
 
     for img, labels in loader:
-        img = img.view().to(device)
+        img = img.to(device)
         labels = labels.to(device)
 
         outputs = model(img)
@@ -147,6 +147,7 @@ def main(mini_batch_size, learning_rate, weight_decay, epochs):
             "runtime": end_time - start_time
         }
         result_list.append(result_dic)
+        break
 
     print("training complete")
     build_graphs(result_list, epochs, name="CIFAR10 Conv Net")
