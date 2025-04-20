@@ -1,5 +1,11 @@
-# ADAM-Reproducing-Results
+# ADAM Reproducing Results
 This repo is to recreate and extend the results of the [ADAM research paper](https://arxiv.org/abs/1412.6980) with Pytorch.
+
+## Table of Contents
+2. [Methodology](#Methodology)
+3. [Hardware](#Hardware)
+4. [Charts](#Charts)
+5. [Conclusion](#Conclusion)
 
 ## Methodology
 Using PyTorch we recreated the regression, neural net, and cnn models from the ADAM paper. We also implemented a vision transformer as an example of a more modern model.The Bag of Words regression model for the IMDB dataset was not used due to library incompatibilities with torchtext and pytorch.  
@@ -28,5 +34,5 @@ Below are performance charts for each model.
 
 ### ViT + CIFAR10
 
-## Results
+## Conclusion
 As you can see, the ADAM optimizer performs the best and is similar to the results of the ADAM paper. The ADAM model performaned the best with little tuning across models, showing it's flexability across architectures and problems. 
