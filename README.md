@@ -1,12 +1,6 @@
 # ADAM Reproducing Results
 This repo is to recreate and extend the results of the [ADAM research paper](https://arxiv.org/abs/1412.6980) with Pytorch.
 
-## Table of Contents
-2. [Methodology](#Methodology)
-3. [Hardware](#Hardware)
-4. [Charts](#Charts)
-5. [Conclusion](#Conclusion)
-
 ## Methodology
 Using PyTorch we recreated the regression, neural net, and cnn models from the ADAM paper. We also implemented a vision transformer as an example of a more modern model.The Bag of Words regression model for the IMDB dataset was not used due to library incompatibilities with torchtext and pytorch.  
 
@@ -26,13 +20,27 @@ To save time, we used 25 epochs and used generic hyperparameters instead of tuni
 
 ## Charts
 Below are performance charts for each model.
-### Regression + MNIST
+### Regression MNIST
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.1_mnist_loss.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.1_mnist_acc.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.1_mnist_time.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.1_mnist_vram.png?raw=true)
 
-### Neural Nets + MNIST
+### Neural Nets MNIST
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.2_mnist_loss.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.2_mnist_acc.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.2_mnist_time.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.2_mnist_vram.png?raw=true)
 
-### ConvNet + CIFAR10
+### ConvNet CIFAR10
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.3_cfar10_loss.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.3_cfar10_acc.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.3_cfar10_time.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.3_cfar10_vram.png?raw=true)
 
-### ViT + CIFAR10
+### ViT CIFAR10
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.4_cfar10__vit_loss.png?raw=true)
+![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.4_cfar10__vit_acc.png?raw=true)
 
 ## Conclusion
 As you can see, the ADAM optimizer performs the best and is similar to the results of the ADAM paper. The ADAM model performaned the best with little tuning across models, showing it's flexability across architectures and problems. 
