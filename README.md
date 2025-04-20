@@ -22,6 +22,7 @@ To save time, we used 25 epochs and used generic hyperparameters instead of tuni
 Below are performance charts for each model.
 ### Regression MNIST
 Architecture: 
+
 in > FC > out
 ![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.1_mnist_loss.png?raw=true)
 ![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.1_mnist_acc.png?raw=true)
@@ -30,6 +31,7 @@ in > FC > out
 
 ### Neural Nets MNIST
 Architecture: 
+
 in > linear 1000 > relu > dropout > linear 1000 > relu > dropout > linear 10 > out
 ![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.2_mnist_loss.png?raw=true)
 ![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.2_mnist_acc.png?raw=true)
@@ -38,8 +40,11 @@ in > linear 1000 > relu > dropout > linear 1000 > relu > dropout > linear 10 > o
 
 ### ConvNet CIFAR10
 Architecture: 
+
 in > conv 64 + kernal 5 > relu > maxpool 3x2 > conv 64 + kernal 5 > relu > maxpool 3x2 > conv 128 + kernal 5 > relu > maxpool 3x2 > linear 1000 > relu > linear 10 > out
+
 Architecture (with dropout): 
+
 in > conv 64 + kernal 5 > relu > dropout >  maxpool 3x2 > conv 64 + kernal 5 > relu > maxpool 3x2 > conv 128 + kernal 5 > relu > maxpool 3x2 > linear 1000 > relu > dropout > linear 10 > out
 
 ![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.3_cfar10_loss.png?raw=true)
@@ -49,6 +54,7 @@ in > conv 64 + kernal 5 > relu > dropout >  maxpool 3x2 > conv 64 + kernal 5 > r
 
 ### ViT CIFAR10
 Architecture:
+
 in > normalize > mutlihead_attention > normalize > mlp > out 
 
 ![image](https://github.com/EfranH25/ADAM-Reproducing-Results/blob/main/charts/6.4_cfar10__vit_loss.png?raw=true)
