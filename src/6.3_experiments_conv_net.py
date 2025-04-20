@@ -5,7 +5,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from models import ConvNet
+from models import ConvNet, ConvNetDrop
 from utilities import build_graphs
 from utilities import train_model_cfar as train_model
 from utilities import test_model_cfar as test_model
@@ -26,61 +26,71 @@ def main(mini_batch_size, learning_rate, weight_decay, epochs):
     # ? training model
     optimizer_options = ["Adam", "SGDNesterov", "AdaGrad"]
     result_list = []
+    drop_list = ["drop", "no drop"]
 
-    for optimizer_name in optimizer_options:
-        print("Optimizer: ", optimizer_name)
-        model = ConvNet().to(device)
-        criterion = nn.CrossEntropyLoss()
+    for drop in drop_list:
+        print("-------------", drop)
+        for optimizer_name in optimizer_options:
+            print("Optimizer: ", optimizer_name)
 
-        if optimizer_name == "Adam":
-            optimizer = optim.Adam(
-                model.parameters(), lr=learning_rate, weight_decay=weight_decay
-            )
-        elif optimizer_name == "SGDNesterov":
-            optimizer = optim.SGD(
-                model.parameters(),
-                lr=learning_rate,
-                weight_decay=weight_decay,
-                momentum=0.9,
-                nesterov=True,
-            )
-        elif optimizer_name == "AdaGrad":
-            optimizer = optim.Adagrad(
-                model.parameters(), lr=learning_rate, weight_decay=weight_decay
-            )
-        else:
-            print(f"Warning: Optimizer {optimizer_name} not a condition. Skipping")
-            continue
+            if drop == "drop":
+                model = ConvNetDrop().to(device)
+                plot_name = optimizer_name + "+dropout"
+            else:
+                model = ConvNet().to(device)
+                plot_name = optimizer_name
 
-        train_ram_usage_list = []
-        test_loss_list = []
-        test_acc_list = []
+            criterion = nn.CrossEntropyLoss()
 
-        start_time = time.time()
-        for epoch in range(1, epochs + 1):
-            train_loss, train_acc, train_ram_usage = train_model(
-                model, train_loader, criterion, optimizer, device)
+            if optimizer_name == "Adam":
+                optimizer = optim.Adam(
+                    model.parameters(), lr=learning_rate, weight_decay=weight_decay
+                )
+            elif optimizer_name == "SGDNesterov":
+                optimizer = optim.SGD(
+                    model.parameters(),
+                    lr=learning_rate,
+                    weight_decay=weight_decay,
+                    momentum=0.9,
+                    nesterov=True,
+                )
+            elif optimizer_name == "AdaGrad":
+                optimizer = optim.Adagrad(
+                    model.parameters(), lr=learning_rate, weight_decay=weight_decay
+                )
+            else:
+                print(f"Warning: Optimizer {optimizer_name} not a condition. Skipping")
+                continue
 
-            test_loss, test_acc = test_model(model, test_loader, criterion, device)
-            test_loss_list.append(test_loss)
-            test_acc_list.append(test_acc)
-            train_ram_usage_list.extend(train_ram_usage)
+            train_ram_usage_list = []
+            test_loss_list = []
+            test_acc_list = []
 
-            print(
-                f"Epoch {epoch}/{epochs} | "
-                f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
-                f"Test Loss: {test_loss:.4f} | Test Acc: {test_acc:.2f}%"
-            )
-        end_time = time.time()
+            start_time = time.time()
+            for epoch in range(1, epochs + 1):
+                train_loss, train_acc, train_ram_usage = train_model(
+                    model, train_loader, criterion, optimizer, device)
 
-        result_dic = {
-            "name": optimizer_name,
-            "test_loss": test_loss_list,
-            "test_acc": test_acc_list,
-            "train_vram_usage": train_ram_usage_list,
-            "runtime": end_time - start_time
-        }
-        result_list.append(result_dic)
+                test_loss, test_acc = test_model(model, test_loader, criterion, device)
+                test_loss_list.append(test_loss)
+                test_acc_list.append(test_acc)
+                train_ram_usage_list.extend(train_ram_usage)
+
+                print(
+                    f"Epoch {epoch}/{epochs} | "
+                    f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
+                    f"Test Loss: {test_loss:.4f} | Test Acc: {test_acc:.2f}%"
+                )
+            end_time = time.time()
+
+            result_dic = {
+                "name": plot_name,
+                "test_loss": test_loss_list,
+                "test_acc": test_acc_list,
+                "train_vram_usage": train_ram_usage_list,
+                "runtime": end_time - start_time
+            }
+            result_list.append(result_dic)
 
     print("training complete")
     build_graphs(result_list, epochs, name="CIFAR10 Conv Net")
